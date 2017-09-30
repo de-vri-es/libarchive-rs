@@ -7,7 +7,7 @@ use std::path::Path;
 use std::ptr;
 use std::slice;
 
-use libc::{c_void, ssize_t};
+use libc::{c_void, ssize_t, off_t};
 use libarchive3_sys::ffi;
 
 use archive::{Entry, ReadCompression, ReadFilter, ReadFormat, Handle};
@@ -47,7 +47,7 @@ pub trait Reader : Handle {
         }
     }
 
-    fn read_block(&self) -> ArchiveResult<Option<&[u8]>> {
+    fn read_block(&self) -> ArchiveResult<Option<(&[u8], off_t)>> {
         let mut buff = ptr::null();
         let mut size = 0;
         let mut offset = 0;
@@ -55,7 +55,7 @@ pub trait Reader : Handle {
         unsafe {
             match ffi::archive_read_data_block(self.handle(), &mut buff, &mut size, &mut offset) {
                 ffi::ARCHIVE_EOF => Ok(None),
-                ffi::ARCHIVE_OK => Ok(Some(slice::from_raw_parts(buff as *const u8, size))),
+                ffi::ARCHIVE_OK => Ok(Some((slice::from_raw_parts(buff as *const u8, size), offset))),
                 _ => Err(ArchiveError::Sys(self.err_code(), self.err_msg())),
             }
         }
