@@ -12,6 +12,7 @@ use libarchive3_sys::ffi;
 
 use archive::{Entry, ReadCompression, ReadFilter, ReadFormat, Handle};
 use error::{ArchiveResult, ArchiveError};
+use super::{ArchiveHandle, ArchiveKindRead};
 
 const BLOCK_SIZE: usize = 10240;
 
@@ -62,20 +63,21 @@ pub trait Reader : Handle {
     }
 }
 
+type ArchiveReadHandle = ArchiveHandle<ArchiveKindRead>;
+
 pub struct FileReader {
-    handle: *mut ffi::Struct_archive,
+    handle: ArchiveReadHandle,
     entry: ReaderEntry,
 }
 
 pub struct StreamReader {
-    handle: *mut ffi::Struct_archive,
+    handle: ArchiveReadHandle,
     entry: ReaderEntry,
     _pipe: Box<Pipe>,
 }
 
 pub struct Builder {
-    handle: *mut ffi::Struct_archive,
-    consumed: bool,
+    handle: ArchiveReadHandle,
 }
 
 pub struct ReaderEntry {
@@ -101,21 +103,19 @@ impl Pipe {
 }
 
 impl FileReader {
-    pub fn open<T: AsRef<Path>>(mut builder: Builder, file: T) -> ArchiveResult<Self> {
-        try!(builder.check_consumed());
+    pub fn open<T: AsRef<Path>>(builder: Builder, file: T) -> ArchiveResult<Self> {
         let c_file = CString::new(file.as_ref().to_string_lossy().as_bytes()).unwrap();
         unsafe {
             match ffi::archive_read_open_filename(builder.handle(), c_file.as_ptr(), BLOCK_SIZE) {
                 ffi::ARCHIVE_OK => {
-                    builder.consume();
-                    Ok(Self::new(builder.handle()))
+                    Ok(Self::new(builder.into_handle()))
                 }
                 _ => Err(ArchiveError::from(&builder as &Handle)),
             }
         }
     }
 
-    fn new(handle: *mut ffi::Struct_archive) -> Self {
+    fn new(handle: ArchiveReadHandle) -> Self {
         FileReader {
             handle: handle,
             entry: ReaderEntry::default(),
@@ -124,8 +124,8 @@ impl FileReader {
 }
 
 impl Handle for FileReader {
-    unsafe fn handle(&self) -> *mut ffi::Struct_archive {
-        self.handle
+    unsafe fn handle(&self) -> &mut ffi::Struct_archive {
+        self.handle.handle()
     }
 }
 
@@ -135,16 +135,8 @@ impl Reader for FileReader {
     }
 }
 
-impl Drop for FileReader {
-    fn drop(&mut self) {
-        unsafe {
-            ffi::archive_read_free(self.handle());
-        }
-    }
-}
-
 impl StreamReader {
-    pub fn open<T: 'static + Read>(mut builder: Builder, src: T) -> ArchiveResult<Self> {
+    pub fn open<T: 'static + Read>(builder: Builder, src: T) -> ArchiveResult<Self> {
         unsafe {
             let mut pipe = Box::new(Pipe::new(src));
             let pipe_ptr: *mut c_void = &mut *pipe as *mut Pipe as *mut c_void;
@@ -155,15 +147,13 @@ impl StreamReader {
                                          None) {
                 ffi::ARCHIVE_OK => {
                     let reader = StreamReader {
-                        handle: builder.handle(),
+                        handle: builder.into_handle(),
                         entry: ReaderEntry::default(),
                         _pipe: pipe,
                     };
-                    builder.consume();
                     Ok(reader)
                 }
                 _ => {
-                    builder.consume();
                     Err(ArchiveError::from(&builder as &Handle))
                 }
             }
@@ -172,22 +162,14 @@ impl StreamReader {
 }
 
 impl Handle for StreamReader {
-    unsafe fn handle(&self) -> *mut ffi::Struct_archive {
-        self.handle
+    unsafe fn handle(&self) -> &mut ffi::Struct_archive {
+        self.handle.handle()
     }
 }
 
 impl Reader for StreamReader {
     fn entry(&mut self) -> &mut ReaderEntry {
         &mut self.entry
-    }
-}
-
-impl Drop for StreamReader {
-    fn drop(&mut self) {
-        unsafe {
-            ffi::archive_read_free(self.handle());
-        }
     }
 }
 
@@ -199,37 +181,37 @@ impl Builder {
     pub fn support_compression(&mut self, compression: ReadCompression) -> ArchiveResult<()> {
         let result = match compression {
             ReadCompression::All => unsafe {
-                ffi::archive_read_support_compression_all(self.handle)
+                ffi::archive_read_support_compression_all(self.handle())
             },
             ReadCompression::Bzip2 => unsafe {
-                ffi::archive_read_support_compression_bzip2(self.handle)
+                ffi::archive_read_support_compression_bzip2(self.handle())
             },
             ReadCompression::Compress => unsafe {
-                ffi::archive_read_support_compression_compress(self.handle)
+                ffi::archive_read_support_compression_compress(self.handle())
             },
             ReadCompression::Gzip => unsafe {
-                ffi::archive_read_support_compression_gzip(self.handle)
+                ffi::archive_read_support_compression_gzip(self.handle())
             },
             ReadCompression::Lzip => unsafe {
-                ffi::archive_read_support_compression_lzip(self.handle)
+                ffi::archive_read_support_compression_lzip(self.handle())
             },
             ReadCompression::Lzma => unsafe {
-                ffi::archive_read_support_compression_lzma(self.handle)
+                ffi::archive_read_support_compression_lzma(self.handle())
             },
             ReadCompression::None => unsafe {
-                ffi::archive_read_support_compression_none(self.handle)
+                ffi::archive_read_support_compression_none(self.handle())
             },
             ReadCompression::Program(prog) => {
                 let c_prog = CString::new(prog).unwrap();
                 unsafe {
-                    ffi::archive_read_support_compression_program(self.handle, c_prog.as_ptr())
+                    ffi::archive_read_support_compression_program(self.handle(), c_prog.as_ptr())
                 }
             }
             ReadCompression::Rpm => unsafe {
-                ffi::archive_read_support_compression_rpm(self.handle)
+                ffi::archive_read_support_compression_rpm(self.handle())
             },
-            ReadCompression::Uu => unsafe { ffi::archive_read_support_compression_uu(self.handle) },
-            ReadCompression::Xz => unsafe { ffi::archive_read_support_compression_xz(self.handle) },
+            ReadCompression::Uu => unsafe { ffi::archive_read_support_compression_uu(self.handle()) },
+            ReadCompression::Xz => unsafe { ffi::archive_read_support_compression_xz(self.handle()) },
         };
         match result {
             ffi::ARCHIVE_OK => Ok(()),
@@ -239,34 +221,34 @@ impl Builder {
 
     pub fn support_filter(&mut self, filter: ReadFilter) -> ArchiveResult<()> {
         let result = match filter {
-            ReadFilter::All => unsafe { ffi::archive_read_support_filter_all(self.handle) },
-            ReadFilter::Bzip2 => unsafe { ffi::archive_read_support_filter_bzip2(self.handle) },
+            ReadFilter::All => unsafe { ffi::archive_read_support_filter_all(self.handle()) },
+            ReadFilter::Bzip2 => unsafe { ffi::archive_read_support_filter_bzip2(self.handle()) },
             ReadFilter::Compress => unsafe {
-                ffi::archive_read_support_filter_compress(self.handle)
+                ffi::archive_read_support_filter_compress(self.handle())
             },
-            ReadFilter::Grzip => unsafe { ffi::archive_read_support_filter_grzip(self.handle) },
-            ReadFilter::Gzip => unsafe { ffi::archive_read_support_filter_gzip(self.handle) },
-            ReadFilter::Lrzip => unsafe { ffi::archive_read_support_filter_lrzip(self.handle) },
-            ReadFilter::Lzip => unsafe { ffi::archive_read_support_filter_lzip(self.handle) },
-            ReadFilter::Lzma => unsafe { ffi::archive_read_support_filter_lzma(self.handle) },
-            ReadFilter::Lzop => unsafe { ffi::archive_read_support_filter_lzop(self.handle) },
-            ReadFilter::None => unsafe { ffi::archive_read_support_filter_none(self.handle) },
+            ReadFilter::Grzip => unsafe { ffi::archive_read_support_filter_grzip(self.handle()) },
+            ReadFilter::Gzip => unsafe { ffi::archive_read_support_filter_gzip(self.handle()) },
+            ReadFilter::Lrzip => unsafe { ffi::archive_read_support_filter_lrzip(self.handle()) },
+            ReadFilter::Lzip => unsafe { ffi::archive_read_support_filter_lzip(self.handle()) },
+            ReadFilter::Lzma => unsafe { ffi::archive_read_support_filter_lzma(self.handle()) },
+            ReadFilter::Lzop => unsafe { ffi::archive_read_support_filter_lzop(self.handle()) },
+            ReadFilter::None => unsafe { ffi::archive_read_support_filter_none(self.handle()) },
             ReadFilter::Program(prog) => {
                 let c_prog = CString::new(prog).unwrap();
-                unsafe { ffi::archive_read_support_filter_program(self.handle, c_prog.as_ptr()) }
+                unsafe { ffi::archive_read_support_filter_program(self.handle(), c_prog.as_ptr()) }
             }
             ReadFilter::ProgramSignature(prog, cb, size) => {
                 let c_prog = CString::new(prog).unwrap();
                 unsafe {
-                    ffi::archive_read_support_filter_program_signature(self.handle,
+                    ffi::archive_read_support_filter_program_signature(self.handle(),
                                                                        c_prog.as_ptr(),
                                                                        mem::transmute(cb),
                                                                        size)
                 }
             }
-            ReadFilter::Rpm => unsafe { ffi::archive_read_support_filter_rpm(self.handle) },
-            ReadFilter::Uu => unsafe { ffi::archive_read_support_filter_uu(self.handle) },
-            ReadFilter::Xz => unsafe { ffi::archive_read_support_filter_xz(self.handle) },
+            ReadFilter::Rpm => unsafe { ffi::archive_read_support_filter_rpm(self.handle()) },
+            ReadFilter::Uu => unsafe { ffi::archive_read_support_filter_uu(self.handle()) },
+            ReadFilter::Xz => unsafe { ffi::archive_read_support_filter_xz(self.handle()) },
         };
         match result {
             ffi::ARCHIVE_OK => Ok(()),
@@ -301,55 +283,29 @@ impl Builder {
     }
 
     pub fn open_file<T: AsRef<Path>>(self, file: T) -> ArchiveResult<FileReader> {
-        try!(self.check_consumed());
         FileReader::open(self, file)
     }
 
     pub fn open_stream<T: 'static + Read>(self, src: T) -> ArchiveResult<StreamReader> {
-        try!(self.check_consumed());
         StreamReader::open(self, src)
     }
 
-    fn check_consumed(&self) -> ArchiveResult<()> {
-        if self.consumed {
-            Err(ArchiveError::Consumed)
-        } else {
-            Ok(())
-        }
-    }
-
-    fn consume(&mut self) {
-        self.consumed = true;
-    }
-}
-
-impl Handle for Builder {
-    unsafe fn handle(&self) -> *mut ffi::Struct_archive {
+    fn into_handle(self) -> ArchiveReadHandle {
         self.handle
     }
 }
 
-impl Drop for Builder {
-    fn drop(&mut self) {
-        if !self.consumed {
-            unsafe {
-                ffi::archive_read_free(self.handle);
-            }
-        }
+impl Handle for Builder {
+    unsafe fn handle(&self) -> &mut ffi::Struct_archive {
+        self.handle.handle()
     }
 }
 
 impl Default for Builder {
     fn default() -> Self {
         unsafe {
-            let handle = ffi::archive_read_new();
-            if handle.is_null() {
-                panic!("Allocation error");
-            }
-            Builder {
-                handle: handle,
-                consumed: false,
-            }
+            let handle = ArchiveReadHandle::from_raw(ffi::archive_read_new());
+            Builder { handle: handle.expect("Allocation error") }
         }
     }
 }
