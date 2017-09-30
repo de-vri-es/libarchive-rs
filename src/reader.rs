@@ -1,4 +1,3 @@
-use std::any::Any;
 use std::default::Default;
 use std::error::Error;
 use std::ffi::CString;
@@ -89,7 +88,7 @@ struct Pipe {
 }
 
 impl Pipe {
-    fn new<T: Any + Read>(src: T) -> Self {
+    fn new<T: 'static + Read>(src: T) -> Self {
         Pipe {
             reader: Box::new(src),
             buffer: vec![0; 8192],
@@ -145,7 +144,7 @@ impl Drop for FileReader {
 }
 
 impl StreamReader {
-    pub fn open<T: Any + Read>(mut builder: Builder, src: T) -> ArchiveResult<Self> {
+    pub fn open<T: 'static + Read>(mut builder: Builder, src: T) -> ArchiveResult<Self> {
         unsafe {
             let mut pipe = Box::new(Pipe::new(src));
             let pipe_ptr: *mut c_void = &mut *pipe as *mut Pipe as *mut c_void;
@@ -306,7 +305,7 @@ impl Builder {
         FileReader::open(self, file)
     }
 
-    pub fn open_stream<T: Any + Read>(self, src: T) -> ArchiveResult<StreamReader> {
+    pub fn open_stream<T: 'static + Read>(self, src: T) -> ArchiveResult<StreamReader> {
         try!(self.check_consumed());
         StreamReader::open(self, src)
     }
