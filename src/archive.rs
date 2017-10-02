@@ -112,11 +112,14 @@ pub trait Handle {
         ErrCode(code)
     }
 
-    fn err_msg(&self) -> String {
+    fn err_msg(&self) -> Option<String> {
         unsafe {
-            let c_str = CStr::from_ptr(ffi::archive_error_string(self.handle()));
-            let buf = c_str.to_bytes();
-            String::from(str::from_utf8(buf).unwrap())
+            let c_str = ffi::archive_error_string(self.handle());
+            c_str.as_ref().map(|c_str| {
+                let c_str = CStr::from_ptr(c_str);
+                let buf = c_str.to_bytes();
+                String::from(str::from_utf8(buf).unwrap())
+            })
         }
     }
 }

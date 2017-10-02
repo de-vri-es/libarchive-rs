@@ -16,7 +16,7 @@ impl fmt::Display for ErrCode {
 #[derive(Debug)]
 pub enum ArchiveError {
     HeaderPosition,
-    Sys(ErrCode, String),
+    Sys(ErrCode, Option<String>),
 }
 
 impl error::Error for ArchiveError {
@@ -33,7 +33,11 @@ impl fmt::Display for ArchiveError {
         match self {
             &ArchiveError::HeaderPosition => write!(fmt, "Header position expected to be 0"),
             &ArchiveError::Sys(ref code, ref msg) => {
-                write!(fmt, "{} (libarchive err_code={})", msg, code)
+                if let &Some(ref msg) = msg {
+                    write!(fmt, "{} (libarchive err_code={})", msg, code)
+                } else {
+                    write!(fmt, "(no message) (libarchive err_code={})", code)
+                }
             }
         }
     }
