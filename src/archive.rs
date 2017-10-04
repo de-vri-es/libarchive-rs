@@ -144,7 +144,7 @@ pub trait Entry {
         }
     }
 
-    fn hardlink(&self) -> Option<&str> {
+    fn hardlink_raw(&self) -> Option<&[u8]> {
         let c_str: &CStr = unsafe {
             let ptr = ffi::archive_entry_hardlink(self.entry());
             if ptr.is_null() {
@@ -153,20 +153,28 @@ pub trait Entry {
             CStr::from_ptr(ptr)
         };
         let buf: &[u8] = c_str.to_bytes();
-        Some(str::from_utf8(buf).unwrap())
+        Some(buf)
+    }
+
+    fn hardlink(&self) -> Option<&str> {
+        self.hardlink_raw().map(|buf| str::from_utf8(buf).unwrap())
+    }
+
+    fn pathname_raw(&self) -> &[u8] {
+        let c_str: &CStr = unsafe { CStr::from_ptr(ffi::archive_entry_pathname(self.entry())) };
+        let buf: &[u8] = c_str.to_bytes();
+        buf
     }
 
     fn pathname(&self) -> &str {
-        let c_str: &CStr = unsafe { CStr::from_ptr(ffi::archive_entry_pathname(self.entry())) };
-        let buf: &[u8] = c_str.to_bytes();
-        str::from_utf8(buf).unwrap()
+        str::from_utf8(self.pathname_raw()).unwrap()
     }
 
     fn size(&self) -> i64 {
         unsafe { ffi::archive_entry_size(self.entry()) }
     }
 
-    fn symlink(&self) -> Option<&str> {
+    fn symlink_raw(&self) -> Option<&[u8]> {
         let c_str: &CStr = unsafe {
             let ptr = ffi::archive_entry_symlink(self.entry());
             if ptr.is_null() {
@@ -175,7 +183,11 @@ pub trait Entry {
             CStr::from_ptr(ptr)
         };
         let buf: &[u8] = c_str.to_bytes();
-        Some(str::from_utf8(buf).unwrap())
+        Some(buf)
+    }
+
+    fn symlink(&self) -> Option<&str> {
+        self.symlink_raw().map(|buf| str::from_utf8(buf).unwrap())
     }
 
     fn set_filetype(&mut self, file_type: FileType) {
