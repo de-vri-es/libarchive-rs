@@ -8,10 +8,10 @@ use libarchive3_sys::ffi;
 
 use archive::{ReadCompression, ReadFilter, ReadFormat, Handle};
 use error::ArchiveResult;
-use super::{ArchiveReadHandle, FileReader, StreamReader};
+use super::{ArchiveHandle, FileReader, StreamReader};
 
 pub struct Builder {
-    handle: ArchiveReadHandle,
+    handle: ArchiveHandle,
 }
 
 impl Builder {
@@ -132,8 +132,8 @@ impl Builder {
     }
 }
 
-impl From<Builder> for ArchiveReadHandle {
-    fn from(b: Builder) -> ArchiveReadHandle {
+impl From<Builder> for ArchiveHandle {
+    fn from(b: Builder) -> ArchiveHandle {
         b.handle
     }
 }
@@ -147,7 +147,7 @@ impl Handle for Builder {
 impl Default for Builder {
     fn default() -> Self {
         unsafe {
-            let handle = ArchiveReadHandle::from_raw(ffi::archive_read_new());
+            let handle = ArchiveHandle::from_raw(ffi::archive_read_new());
             Builder { handle: handle.expect("Allocation error") }
         }
     }

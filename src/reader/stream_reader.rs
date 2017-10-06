@@ -8,10 +8,10 @@ use libarchive3_sys::ffi;
 
 use archive::Handle;
 use error::{ArchiveResult, ArchiveError};
-use super::{ArchiveReadHandle, Builder, Reader, ReaderEntry};
+use super::{ArchiveHandle, Builder, Reader, ReaderEntry};
 
 pub struct StreamReader {
-    handle: ArchiveReadHandle,
+    handle: ArchiveHandle,
     entry: ReaderEntry,
     _pipe: Box<Pipe>,
 }

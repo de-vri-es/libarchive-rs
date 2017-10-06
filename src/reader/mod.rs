@@ -7,7 +7,7 @@ use libarchive3_sys::ffi;
 
 use archive::{Entry, Handle};
 use error::{ArchiveResult, ArchiveError};
-use super::{ArchiveHandle, ArchiveKindRead};
+use super::ArchiveHandle;
 
 mod builder;
 pub use self::builder::Builder;
@@ -17,8 +17,6 @@ pub use self::file_reader::FileReader;
 
 mod stream_reader;
 pub use self::stream_reader::StreamReader;
-
-type ArchiveReadHandle = ArchiveHandle<ArchiveKindRead>;
 
 pub trait Reader : Handle {
     fn entry(&mut self) -> &mut ReaderEntry;

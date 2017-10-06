@@ -8,43 +8,35 @@ pub mod writer;
 
 use libarchive3_sys::ffi;
 
-pub trait ArchiveHandleKind {
-    unsafe fn free_handle(*mut ffi::Struct_archive);
-}
 
-pub struct ArchiveKindRead;
-pub struct ArchiveKindWrite;
-
-impl ArchiveHandleKind for ArchiveKindRead {
-    unsafe fn free_handle(handle: *mut ffi::Struct_archive) {
-        ffi::archive_read_free(handle);
-    }
-}
-
-impl ArchiveHandleKind for ArchiveKindWrite {
-    unsafe fn free_handle(handle: *mut ffi::Struct_archive) {
-        ffi::archive_write_free(handle);
-    }
-}
-
-pub struct ArchiveHandle<K: ArchiveHandleKind> {
+pub struct ArchiveHandle {
     handle: *mut ffi::Struct_archive,
-    _kind: ::std::marker::PhantomData<K>
 }
 
-impl<K: ArchiveHandleKind> ArchiveHandle<K> {
+impl ArchiveHandle {
     unsafe fn from_raw(handle: *mut ffi::Struct_archive) -> Option<Self> {
-        handle.as_mut().map(|handle| ArchiveHandle { handle: handle, _kind: ::std::marker::PhantomData } )
+        handle.as_mut().map(|handle| ArchiveHandle { handle: handle } )
     }
 }
 
-impl<K: ArchiveHandleKind> Drop for ArchiveHandle<K> {
+impl Drop for ArchiveHandle {
     fn drop(&mut self) {
-        unsafe { K::free_handle(self.handle) }
+        unsafe {
+            // It doesn't matter whether to call read or write variants
+            // of the following functions, because since libarchive-2.7.0
+            // they are implemented identically and know which kind of
+            // archive struct they deal with.
+            // The documentation suggests not calling close(),
+            // because free() calls it automatically, but actually
+            // free() doesn't call it for fatally failed archives,
+            // which apparently leads to file descriptors leaks.
+            ffi::archive_read_close(self.handle);
+            ffi::archive_read_free(self.handle);
+        }
     }
 }
 
-impl<K: ArchiveHandleKind> archive::Handle for ArchiveHandle<K> {
+impl archive::Handle for ArchiveHandle {
     unsafe fn handle(&self) -> &mut ffi::Struct_archive {
         &mut *self.handle
     }

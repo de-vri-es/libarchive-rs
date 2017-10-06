@@ -6,12 +6,12 @@ use libarchive3_sys::ffi;
 
 use archive::Handle;
 use error::{ArchiveResult, ArchiveError};
-use super::{ArchiveReadHandle, Builder, Reader, ReaderEntry};
+use super::{ArchiveHandle, Builder, Reader, ReaderEntry};
 
 const BLOCK_SIZE: usize = 10240;
 
 pub struct FileReader {
-    handle: ArchiveReadHandle,
+    handle: ArchiveHandle,
     entry: ReaderEntry,
 }
 
@@ -28,7 +28,7 @@ impl FileReader {
         }
     }
 
-    fn new(handle: ArchiveReadHandle) -> Self {
+    fn new(handle: ArchiveHandle) -> Self {
         FileReader {
             handle: handle,
             entry: ReaderEntry::default(),

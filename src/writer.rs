@@ -8,24 +8,22 @@ use libarchive3_sys::ffi;
 use archive::{Entry, ExtractOptions, Handle, WriteFilter, WriteFormat};
 use reader::{Reader, ReaderEntry};
 use error::{ArchiveResult, ArchiveError};
-use super::{ArchiveHandle, ArchiveKindWrite};
-
-type ArchiveWriteHandle = ArchiveHandle<ArchiveKindWrite>;
+use super::ArchiveHandle;
 
 pub struct Writer {
-    handle: ArchiveWriteHandle,
+    handle: ArchiveHandle,
 }
 
 pub struct Disk {
-    handle: ArchiveWriteHandle,
+    handle: ArchiveHandle,
 }
 
 pub struct Builder {
-    handle: ArchiveWriteHandle,
+    handle: ArchiveHandle,
 }
 
 impl Writer {
-    fn new(handle: ArchiveWriteHandle) -> Self {
+    fn new(handle: ArchiveHandle) -> Self {
         Writer { handle: handle }
     }
 }
@@ -189,7 +187,7 @@ impl Handle for Disk {
 impl Default for Disk {
     fn default() -> Self {
         unsafe {
-            let handle = ArchiveWriteHandle::from_raw(ffi::archive_write_disk_new());
+            let handle = ArchiveHandle::from_raw(ffi::archive_write_disk_new());
             Disk { handle: handle.expect("Allocation error") }
         }
     }
@@ -276,7 +274,7 @@ impl Builder {
 impl Default for Builder {
     fn default() -> Self {
         unsafe {
-            let handle = ArchiveWriteHandle::from_raw(ffi::archive_write_new());
+            let handle = ArchiveHandle::from_raw(ffi::archive_write_new());
             Builder { handle: handle.expect("Allocation error") }
         }
     }
