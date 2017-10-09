@@ -4,7 +4,7 @@ use archive;
 
 pub type ArchiveResult<T> = Result<T, ArchiveError>;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
 pub struct ErrCode(pub i32);
 
 impl fmt::Display for ErrCode {
@@ -13,7 +13,7 @@ impl fmt::Display for ErrCode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
 pub enum ArchiveError {
     HeaderPosition,
     Sys(ErrCode, Option<String>),
