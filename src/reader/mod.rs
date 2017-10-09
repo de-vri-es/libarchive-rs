@@ -2,7 +2,7 @@ use std::default::Default;
 use std::ptr;
 use std::slice;
 
-use libc::off_t;
+use libc::{off_t, size_t};
 use libarchive3_sys::ffi;
 
 use archive::{Entry, Handle};
@@ -32,6 +32,35 @@ pub trait Reader : Handle {
         } else {
             None
         }
+    }
+
+    fn read(&self, buffer: &mut [u8]) -> ArchiveResult<size_t> {
+        let ret_val = unsafe { ffi::archive_read_data(self.handle(), buffer.as_mut_ptr() as *mut _, buffer.len()) };
+        if ret_val >= 0 {
+            return Ok(ret_val as size_t);
+        }
+
+        Err(ArchiveError::Sys(self.err_code(), self.err_msg()))
+    }
+
+    fn read_all(&self) -> ArchiveResult<Vec<u8>> {
+        const INCREMENT : usize = 65536;
+        let mut buf = Vec::with_capacity(INCREMENT);
+        loop {
+            let len = buf.len();
+            let mut cap = buf.capacity();
+            if len >= cap {
+                buf.reserve(len + INCREMENT);
+                cap = buf.capacity();
+            }
+
+            let res = self.read(unsafe { buf.get_unchecked_mut(len..cap) })?;
+            if 0 == res {
+                break; //EOF
+            }
+            unsafe { buf.set_len(len + res) };
+        };
+        Ok(buf)
     }
 
     fn read_block(&self) -> ArchiveResult<Option<(&[u8], off_t)>> {
