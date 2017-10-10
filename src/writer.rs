@@ -6,8 +6,9 @@ use std::ffi::CString;
 use libarchive3_sys::ffi;
 
 use archive::{Entry, ExtractOptions, Handle, WriteFilter, WriteFormat};
-use reader::{Reader, ReaderEntry};
+use entry::BorrowedEntry;
 use error::{ArchiveResult, ArchiveError};
+use reader::Reader;
 use super::ArchiveHandle;
 
 pub struct Writer {
@@ -168,7 +169,7 @@ impl Disk {
         }
     }
 
-    fn write_header(&self, entry: &ReaderEntry) -> ArchiveResult<()> {
+    fn write_header(&self, entry: &BorrowedEntry) -> ArchiveResult<()> {
         unsafe {
             match ffi::archive_write_header(self.handle(), entry.entry()) {
                 ffi::ARCHIVE_OK => Ok(()),

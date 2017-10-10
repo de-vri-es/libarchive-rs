@@ -1,3 +1,6 @@
+mod entry_borrowed;
+pub use self::entry_borrowed::BorrowedEntry;
+
 use archive::FileType;
 
 use std::ffi::{CStr, CString};

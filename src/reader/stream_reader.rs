@@ -7,12 +7,13 @@ use libc::{c_void, ssize_t};
 use libarchive3_sys::ffi;
 
 use archive::Handle;
+use entry::BorrowedEntry;
 use error::{ArchiveResult, ArchiveError};
-use super::{ArchiveHandle, Builder, Reader, ReaderEntry};
+use super::{ArchiveHandle, Builder, Reader};
 
 pub struct StreamReader {
     handle: ArchiveHandle,
-    entry: ReaderEntry,
+    entry: BorrowedEntry,
     _pipe: Box<Pipe>,
 }
 
@@ -47,7 +48,7 @@ impl StreamReader {
                 ffi::ARCHIVE_OK => {
                     let reader = StreamReader {
                         handle: builder.into(),
-                        entry: ReaderEntry::default(),
+                        entry: BorrowedEntry::default(),
                         _pipe: pipe,
                     };
                     Ok(reader)
@@ -67,7 +68,7 @@ impl Handle for StreamReader {
 }
 
 impl Reader for StreamReader {
-    fn entry(&mut self) -> &mut ReaderEntry {
+    fn entry(&mut self) -> &mut BorrowedEntry {
         &mut self.entry
     }
 }

@@ -1,13 +1,16 @@
-use std::default::Default;
 use std::ptr;
 use std::slice;
 
 use libc::{off_t, size_t};
 use libarchive3_sys::ffi;
 
-use archive::{Entry, Handle};
+use archive::Handle;
+use entry::BorrowedEntry;
 use error::{ArchiveResult, ArchiveError};
 use super::ArchiveHandle;
+
+#[deprecated(note="Use BorrowedEntry directly instead.")]
+pub use entry::BorrowedEntry as ReaderEntry;
 
 mod builder;
 pub use self::builder::Builder;
@@ -19,13 +22,13 @@ mod stream_reader;
 pub use self::stream_reader::StreamReader;
 
 pub trait Reader : Handle {
-    fn entry(&mut self) -> &mut ReaderEntry;
+    fn entry(&mut self) -> &mut BorrowedEntry;
 
     fn header_position(&self) -> i64 {
         unsafe { ffi::archive_read_header_position(self.handle()) }
     }
 
-    fn next_header(&mut self) -> Option<&mut ReaderEntry> {
+    fn next_header(&mut self) -> Option<&mut BorrowedEntry> {
         let res = unsafe { ffi::archive_read_next_header(self.handle(), &mut self.entry().handle) };
         if res == 0 {
             Some(self.entry())
@@ -78,24 +81,3 @@ pub trait Reader : Handle {
     }
 }
 
-pub struct ReaderEntry {
-    handle: *mut ffi::Struct_archive_entry,
-}
-
-impl ReaderEntry {
-    pub fn new(handle: *mut ffi::Struct_archive_entry) -> Self {
-        ReaderEntry { handle: handle }
-    }
-}
-
-impl Default for ReaderEntry {
-    fn default() -> Self {
-        ReaderEntry { handle: ptr::null_mut() }
-    }
-}
-
-impl Entry for ReaderEntry {
-    unsafe fn entry(&self) -> *mut ffi::Struct_archive_entry {
-        self.handle
-    }
-}

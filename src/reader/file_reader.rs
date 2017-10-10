@@ -5,14 +5,15 @@ use std::path::Path;
 use libarchive3_sys::ffi;
 
 use archive::Handle;
+use entry::BorrowedEntry;
 use error::{ArchiveResult, ArchiveError};
-use super::{ArchiveHandle, Builder, Reader, ReaderEntry};
+use super::{ArchiveHandle, Builder, Reader};
 
 const BLOCK_SIZE: usize = 10240;
 
 pub struct FileReader {
     handle: ArchiveHandle,
-    entry: ReaderEntry,
+    entry: BorrowedEntry,
 }
 
 impl FileReader {
@@ -48,7 +49,7 @@ impl FileReader {
     fn new(handle: ArchiveHandle) -> Self {
         FileReader {
             handle: handle,
-            entry: ReaderEntry::default(),
+            entry: BorrowedEntry::default(),
         }
     }
 }
@@ -60,7 +61,7 @@ impl Handle for FileReader {
 }
 
 impl Reader for FileReader {
-    fn entry(&mut self) -> &mut ReaderEntry {
+    fn entry(&mut self) -> &mut BorrowedEntry {
         &mut self.entry
     }
 }
