@@ -4,10 +4,10 @@ use std::path::Path;
 
 use libarchive3_sys::ffi;
 
-use archive::Handle;
+use archive::{ArchiveHandle, Handle};
 use entry::BorrowedEntry;
 use error::{ArchiveResult, ArchiveError};
-use super::{ArchiveHandle, Builder, Reader};
+use super::{Builder, Reader};
 
 const BLOCK_SIZE: usize = 10240;
 

@@ -7,7 +7,6 @@ use libarchive3_sys::ffi;
 use archive::Handle;
 use entry::BorrowedEntry;
 use error::{ArchiveResult, ArchiveError};
-use super::ArchiveHandle;
 
 #[deprecated(note="Use BorrowedEntry directly instead.")]
 pub use entry::BorrowedEntry as ReaderEntry;

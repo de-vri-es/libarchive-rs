@@ -6,10 +6,10 @@ use std::io::{self, Read};
 use libc::{c_void, ssize_t};
 use libarchive3_sys::ffi;
 
-use archive::Handle;
+use archive::{ArchiveHandle, Handle};
 use entry::BorrowedEntry;
 use error::{ArchiveResult, ArchiveError};
-use super::{ArchiveHandle, Builder, Reader};
+use super::{Builder, Reader};
 
 pub struct StreamReader {
     handle: ArchiveHandle,

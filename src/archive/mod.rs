@@ -1,3 +1,5 @@
+mod archive_handle;
+
 use std::default::Default;
 use std::ffi::CStr;
 use std::str;
@@ -7,6 +9,8 @@ use error::ErrCode;
 
 #[deprecated(note="Use entry::Entry directly instead.")]
 pub use entry::Entry;
+
+pub use self::archive_handle::ArchiveHandle;
 
 pub enum ReadCompression {
     All,

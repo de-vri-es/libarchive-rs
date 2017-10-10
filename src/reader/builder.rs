@@ -6,9 +6,9 @@ use std::path::Path;
 
 use libarchive3_sys::ffi;
 
-use archive::{ReadCompression, ReadFilter, ReadFormat, Handle};
+use archive::{ArchiveHandle, ReadCompression, ReadFilter, ReadFormat, Handle};
 use error::ArchiveResult;
-use super::{ArchiveHandle, FileReader, StreamReader};
+use super::{FileReader, StreamReader};
 
 pub struct Builder {
     handle: ArchiveHandle,

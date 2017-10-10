@@ -5,11 +5,10 @@ use std::ffi::CString;
 
 use libarchive3_sys::ffi;
 
-use archive::{Entry, ExtractOptions, Handle, WriteFilter, WriteFormat};
+use archive::{ArchiveHandle, Entry, ExtractOptions, Handle, WriteFilter, WriteFormat};
 use entry::BorrowedEntry;
 use error::{ArchiveResult, ArchiveError};
 use reader::Reader;
-use super::ArchiveHandle;
 
 pub struct Writer {
     handle: ArchiveHandle,
