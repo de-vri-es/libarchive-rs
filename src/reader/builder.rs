@@ -127,6 +127,11 @@ impl Builder {
         FileReader::open(self, file)
     }
 
+    #[cfg(unix)]
+    pub fn open_fd(self, fd: &::std::os::unix::io::RawFd) -> ArchiveResult<FileReader> {
+        FileReader::open_fd(self, fd)
+    }
+
     pub fn open_stream<T: 'static + Read>(self, src: T) -> ArchiveResult<StreamReader> {
         StreamReader::open(self, src)
     }

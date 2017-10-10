@@ -28,6 +28,23 @@ impl FileReader {
         }
     }
 
+    /// Opens archive backed by given file descriptor.
+    /// Note that the file descriptor is not owned, i.e. it won't be closed
+    /// on destruction of FileReader.
+    /// It's your responsibility to close the descriptor after it's no longer used by FileReader.
+    /// This is hinted at by taking RawFd by reference.
+    #[cfg(unix)]
+    pub fn open_fd(builder: Builder, fd: &::std::os::unix::io::RawFd) -> ArchiveResult<Self> {
+        unsafe {
+            match ffi::archive_read_open_fd(builder.handle(), *fd, BLOCK_SIZE) {
+                ffi::ARCHIVE_OK => {
+                    Ok(Self::new(builder.into()))
+                }
+                _ => Err(ArchiveError::from(&builder as &Handle)),
+            }
+        }
+    }
+
     fn new(handle: ArchiveHandle) -> Self {
         FileReader {
             handle: handle,
