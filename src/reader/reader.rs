@@ -5,7 +5,7 @@ use libc::{off_t, size_t};
 use libarchive3_sys::ffi;
 
 use archive::Handle;
-use entry::BorrowedEntry;
+use entry::{Entry, BorrowedEntry, OwnedEntry};
 use error::{ArchiveResult, ArchiveError};
 
 #[deprecated(note="Use BorrowedEntry directly instead.")]
@@ -20,10 +20,19 @@ pub trait Reader : Handle {
 
     fn next_header(&mut self) -> Option<&mut BorrowedEntry> {
         let res = unsafe { ffi::archive_read_next_header(self.handle(), &mut self.entry().handle) };
-        if res == 0 {
+        if res == ffi::ARCHIVE_OK {
             Some(self.entry())
         } else {
             None
+        }
+    }
+
+    fn next_header2(&mut self, entry: &mut OwnedEntry) -> ArchiveResult<()> {
+        let res = unsafe { ffi::archive_read_next_header2(self.handle(), entry.entry()) };
+        if res == ffi::ARCHIVE_OK {
+            Ok(())
+        } else {
+            Err(ArchiveError::Sys(self.err_code(), self.err_msg()))
         }
     }
 
