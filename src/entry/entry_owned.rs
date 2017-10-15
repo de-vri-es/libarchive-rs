@@ -40,3 +40,9 @@ impl Clone for OwnedEntry {
         }
     }
 }
+
+impl ::std::fmt::Debug for OwnedEntry {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        super::entry::entry_debug_fmt("OwnedEntry", self, f)
+    }
+}

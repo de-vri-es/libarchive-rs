@@ -23,3 +23,9 @@ impl Entry for BorrowedEntry {
         self.handle
     }
 }
+
+impl ::std::fmt::Debug for BorrowedEntry {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        super::entry::entry_debug_fmt("BorrowedEntry", self, f)
+    }
+}

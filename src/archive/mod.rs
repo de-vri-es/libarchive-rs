@@ -96,6 +96,7 @@ pub enum WriteFilter {
     Xz,
 }
 
+#[derive(Debug)]
 pub enum FileType {
     BlockDevice,
     SymbolicLink,

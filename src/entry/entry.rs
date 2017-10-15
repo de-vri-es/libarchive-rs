@@ -103,3 +103,10 @@ pub trait Entry {
         }
     }
 }
+
+pub fn entry_debug_fmt<E: Entry>(struct_name: &str, e: &E, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+    f.debug_struct(struct_name)
+        .field("type", &e.filetype())
+        .field("pathname", &String::from_utf8_lossy(e.pathname_raw()))
+        .finish()
+}
