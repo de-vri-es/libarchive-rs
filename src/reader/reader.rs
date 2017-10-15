@@ -78,5 +78,14 @@ pub trait Reader : Handle {
             }
         }
     }
+
+    fn read_skip(&self) -> ArchiveResult<()> {
+        let res = unsafe { ffi::archive_read_data_skip(self.handle()) };
+        if res == ffi::ARCHIVE_OK {
+            Ok(())
+        } else {
+            Err(ArchiveError::Sys(self.err_code(), self.err_msg()))
+        }
+    }
 }
 
