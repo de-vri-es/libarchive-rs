@@ -32,3 +32,11 @@ impl Entry for OwnedEntry {
         self.handle
     }
 }
+
+impl Clone for OwnedEntry {
+    fn clone(&self) -> Self {
+        unsafe {
+            Self::from_raw(ffi::archive_entry_clone(self.handle)).expect("Allocation error")
+        }
+    }
+}
