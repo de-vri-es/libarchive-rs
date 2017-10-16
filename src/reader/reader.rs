@@ -27,12 +27,12 @@ pub trait Reader : Handle {
         }
     }
 
-    fn next_header2(&mut self, entry: &mut OwnedEntry) -> ArchiveResult<()> {
+    fn next_header2(&mut self, entry: &mut OwnedEntry) -> ArchiveResult<bool> {
         let res = unsafe { ffi::archive_read_next_header2(self.handle(), entry.entry()) };
-        if res == ffi::ARCHIVE_OK {
-            Ok(())
-        } else {
-            Err(ArchiveError::Sys(self.err_code(), self.err_msg()))
+        match res {
+            ffi::ARCHIVE_OK => Ok(true),
+            ffi::ARCHIVE_EOF => Ok(false),
+            _ => Err(ArchiveError::Sys(self.err_code(), self.err_msg())),
         }
     }
 
