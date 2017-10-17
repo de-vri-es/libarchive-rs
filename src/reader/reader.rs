@@ -65,6 +65,33 @@ pub trait Reader : Handle {
         Ok(buf)
     }
 
+    fn read_exact(&mut self, buf: &mut [u8]) -> ArchiveResult<usize> {
+        let cnt = buf.len();
+        let mut read_total: usize = 0;
+        while read_total < cnt {
+            let read_bytes = self.read(unsafe { buf.get_unchecked_mut(read_total..cnt) })?;
+            if 0 == read_bytes {
+                break; //EOF
+            }
+            read_total += read_bytes as usize;
+        };
+        Ok(read_total)
+    }
+
+    fn skip_exact(&mut self, cnt: usize) -> ArchiveResult<usize> {
+        let mut tmp_buf = [0; 4096];
+        let mut read_total: usize = 0;
+        while read_total < cnt {
+            let to_read = ::std::cmp::min(tmp_buf.len(), cnt);
+            let read_bytes = self.read(unsafe { tmp_buf.get_unchecked_mut(0..to_read) })?;
+            if 0 == read_bytes {
+                break; //EOF
+            }
+            read_total += read_bytes as usize;
+        }
+        Ok(read_total)
+    }
+
     fn read_block(&mut self) -> ArchiveResult<Option<(&[u8], off_t)>> {
         let mut buff = ptr::null();
         let mut size = 0;
