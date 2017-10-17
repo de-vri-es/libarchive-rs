@@ -36,7 +36,7 @@ pub trait Reader : Handle {
         }
     }
 
-    fn read(&self, buffer: &mut [u8]) -> ArchiveResult<size_t> {
+    fn read(&mut self, buffer: &mut [u8]) -> ArchiveResult<size_t> {
         let ret_val = unsafe { ffi::archive_read_data(self.handle(), buffer.as_mut_ptr() as *mut _, buffer.len()) };
         if ret_val >= 0 {
             return Ok(ret_val as size_t);
@@ -45,7 +45,7 @@ pub trait Reader : Handle {
         Err(ArchiveError::Sys(self.err_code(), self.err_msg()))
     }
 
-    fn read_all(&self) -> ArchiveResult<Vec<u8>> {
+    fn read_all(&mut self) -> ArchiveResult<Vec<u8>> {
         const INCREMENT : usize = 65536;
         let mut buf = Vec::with_capacity(INCREMENT);
         loop {
@@ -65,7 +65,7 @@ pub trait Reader : Handle {
         Ok(buf)
     }
 
-    fn read_block(&self) -> ArchiveResult<Option<(&[u8], off_t)>> {
+    fn read_block(&mut self) -> ArchiveResult<Option<(&[u8], off_t)>> {
         let mut buff = ptr::null();
         let mut size = 0;
         let mut offset = 0;
@@ -79,7 +79,7 @@ pub trait Reader : Handle {
         }
     }
 
-    fn read_skip(&self) -> ArchiveResult<()> {
+    fn read_skip(&mut self) -> ArchiveResult<()> {
         let res = unsafe { ffi::archive_read_data_skip(self.handle()) };
         if res == ffi::ARCHIVE_OK {
             Ok(())
