@@ -10,6 +10,7 @@ pub use self::archive_handle::ArchiveHandle;
 pub use entry::Entry;
 pub use self::handle::Handle;
 
+#[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
 pub enum ReadCompression {
     All,
     Bzip2,
@@ -24,6 +25,7 @@ pub enum ReadCompression {
     Xz,
 }
 
+#[derive(Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
 pub enum ReadFormat {
     SevenZip,
     All,
@@ -42,6 +44,7 @@ pub enum ReadFormat {
     Zip,
 }
 
+#[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
 pub enum ReadFilter {
     All,
     Bzip2,
@@ -60,6 +63,7 @@ pub enum ReadFilter {
     Xz,
 }
 
+#[derive(Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
 pub enum WriteFormat {
     SevenZip,
     ArBsd,
@@ -80,6 +84,7 @@ pub enum WriteFormat {
     Zip,
 }
 
+#[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
 pub enum WriteFilter {
     B64Encode,
     Bzip2,
@@ -96,7 +101,7 @@ pub enum WriteFilter {
     Xz,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
 pub enum FileType {
     BlockDevice,
     SymbolicLink,
@@ -109,7 +114,7 @@ pub enum FileType {
     Unknown,
 }
 
-
+#[derive(Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
 pub enum ExtractOption {
     // The user and group IDs should be set on the restored file. By default, the user and group
     // IDs are not restored.
@@ -173,6 +178,7 @@ pub enum ExtractOption {
     ClearNoChangeFFlags,
 }
 
+#[derive(Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
 pub struct ExtractOptions {
     pub flags: i32,
 }
