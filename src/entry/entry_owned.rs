@@ -46,3 +46,5 @@ impl ::std::fmt::Debug for OwnedEntry {
         super::entry::entry_debug_fmt("OwnedEntry", self, f)
     }
 }
+
+unsafe impl ::std::marker::Send for OwnedEntry {}
