@@ -1,5 +1,6 @@
 use archive::FileType;
 
+use libc::{c_uint, mode_t, timespec};
 use std::ffi::{CStr, CString};
 use std::path::PathBuf;
 use std::str;
@@ -8,6 +9,39 @@ use libarchive3_sys::ffi;
 
 pub trait Entry {
     unsafe fn entry(&self) -> *mut ffi::Struct_archive_entry;
+
+    fn atime(&self) -> Option<timespec> {
+        let entry = unsafe { self.entry() };
+        if 0 == unsafe { ffi::archive_entry_atime_is_set(entry) } {
+            return None;
+        }
+        Some(timespec {
+            tv_sec: unsafe { ffi::archive_entry_atime(entry) },
+            tv_nsec: unsafe { ffi::archive_entry_atime_nsec(entry) },
+        })
+    }
+
+    fn birthtime(&self) -> Option<timespec> {
+        let entry = unsafe { self.entry() };
+        if 0 == unsafe { ffi::archive_entry_birthtime_is_set(entry) } {
+            return None;
+        }
+        Some(timespec {
+            tv_sec: unsafe { ffi::archive_entry_birthtime(entry) },
+            tv_nsec: unsafe { ffi::archive_entry_birthtime_nsec(entry) },
+        })
+    }
+
+    fn ctime(&self) -> Option<timespec> {
+        let entry = unsafe { self.entry() };
+        if 0 == unsafe { ffi::archive_entry_ctime_is_set(entry) } {
+            return None;
+        }
+        Some(timespec {
+            tv_sec: unsafe { ffi::archive_entry_ctime(entry) },
+            tv_nsec: unsafe { ffi::archive_entry_ctime_nsec(entry) },
+        })
+    }
 
     fn filetype(&self) -> FileType {
         unsafe {
@@ -42,6 +76,25 @@ pub trait Entry {
         self.hardlink_raw().map(|buf| str::from_utf8(buf).unwrap())
     }
 
+    fn mode(&self) -> mode_t {
+        unsafe { ffi::archive_entry_mode(self.entry()) }
+    }
+
+    fn mtime(&self) -> Option<timespec> {
+        let entry = unsafe { self.entry() };
+        if 0 == unsafe { ffi::archive_entry_mtime_is_set(entry) } {
+            return None;
+        }
+        Some(timespec {
+            tv_sec: unsafe { ffi::archive_entry_mtime(entry) },
+            tv_nsec: unsafe { ffi::archive_entry_mtime_nsec(entry) },
+        })
+    }
+
+    fn nlink(&self) -> c_uint {
+        unsafe { ffi::archive_entry_nlink(self.entry()) }
+    }
+
     fn pathname_raw(&self) -> &[u8] {
         let c_str: &CStr = unsafe { CStr::from_ptr(ffi::archive_entry_pathname(self.entry())) };
         let buf: &[u8] = c_str.to_bytes();
@@ -72,6 +125,27 @@ pub trait Entry {
         self.symlink_raw().map(|buf| str::from_utf8(buf).unwrap())
     }
 
+    fn set_atime(&mut self, t: Option<timespec>) {
+        match t {
+            Some(t) => unsafe { ffi::archive_entry_set_atime(self.entry(), t.tv_sec, t.tv_nsec) },
+            None => unsafe { ffi::archive_entry_unset_atime(self.entry()) },
+        }
+    }
+
+    fn set_birthtime(&mut self, t: Option<timespec>) {
+        match t {
+            Some(t) => unsafe { ffi::archive_entry_set_birthtime(self.entry(), t.tv_sec, t.tv_nsec) },
+            None => unsafe { ffi::archive_entry_unset_birthtime(self.entry()) },
+        }
+    }
+
+    fn set_ctime(&mut self, t: Option<timespec>) {
+        match t {
+            Some(t) => unsafe { ffi::archive_entry_set_ctime(self.entry(), t.tv_sec, t.tv_nsec) },
+            None => unsafe { ffi::archive_entry_unset_ctime(self.entry()) },
+        }
+    }
+
     fn set_filetype(&mut self, file_type: FileType) {
         unsafe {
             let file_type = match file_type {
@@ -94,6 +168,21 @@ pub trait Entry {
             let c_str = CString::new(path.to_str().unwrap()).unwrap();
             ffi::archive_entry_set_link(self.entry(), c_str.as_ptr());
         }
+    }
+
+    fn set_mode(&mut self, m: mode_t) {
+        unsafe { ffi::archive_entry_set_mode(self.entry(), m) };
+    }
+
+    fn set_mtime(&mut self, t: Option<timespec>) {
+        match t {
+            Some(t) => unsafe { ffi::archive_entry_set_mtime(self.entry(), t.tv_sec, t.tv_nsec) },
+            None => unsafe { ffi::archive_entry_unset_mtime(self.entry()) },
+        }
+    }
+
+    fn set_nlink(&mut self, n: c_uint) {
+        unsafe { ffi::archive_entry_set_nlink(self.entry(), n) }
     }
 
     fn set_pathname(&mut self, path: &PathBuf) {
