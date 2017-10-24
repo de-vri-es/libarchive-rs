@@ -132,7 +132,7 @@ impl Builder {
         FileReader::open_fd(self, fd)
     }
 
-    pub fn open_stream<T: 'static + Read>(self, src: T) -> ArchiveResult<StreamReader> {
+    pub fn open_stream<T: 'static + Read>(self, src: T) -> ArchiveResult<StreamReader<T>> {
         StreamReader::open(self, src)
     }
 }
