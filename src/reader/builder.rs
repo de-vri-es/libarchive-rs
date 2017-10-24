@@ -1,6 +1,6 @@
 use std::default::Default;
 use std::ffi::CString;
-use std::io::Read;
+use std::io::{Read, Seek};
 use std::mem;
 use std::path::Path;
 
@@ -130,6 +130,10 @@ impl Builder {
     #[cfg(unix)]
     pub fn open_fd(self, fd: &::std::os::unix::io::RawFd) -> ArchiveResult<FileReader> {
         FileReader::open_fd(self, fd)
+    }
+
+    pub fn open_seekable_stream<T: 'static + Read + Seek>(self, src: T) -> ArchiveResult<StreamReader<T>> {
+        StreamReader::open_seekable(self, src)
     }
 
     pub fn open_stream<T: 'static + Read>(self, src: T) -> ArchiveResult<StreamReader<T>> {

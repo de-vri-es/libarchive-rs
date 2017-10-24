@@ -1,9 +1,9 @@
 use std::default::Default;
 use std::error::Error;
 use std::ffi::CString;
-use std::io::{self, Read};
+use std::io::{self, Read, Seek, SeekFrom};
 
-use libc::{c_void, ssize_t};
+use libc::{c_void, ssize_t, c_int, int64_t, SEEK_SET, SEEK_CUR, SEEK_END};
 use libarchive3_sys::ffi;
 
 use archive::{ArchiveHandle, Handle};
@@ -33,6 +33,10 @@ impl<T> Pipe<T> {
     fn read_bytes(&mut self) -> io::Result<usize> where T: Read {
         self.reader.read(&mut self.buffer[..])
     }
+
+    fn seek(&mut self, pos: SeekFrom) -> io::Result<(u64)> where T: Seek {
+        self.reader.seek(pos)
+    }
 }
 
 impl<T> StreamReader<T> {
@@ -58,6 +62,21 @@ impl<T> StreamReader<T> {
                 }
             }
         }
+    }
+
+    pub fn open_seekable(builder: Builder, src: T) -> ArchiveResult<Self> where T: Read + Seek {
+        unsafe {
+            // Seek callback setter must be called before archive_read_open()
+            match ffi::archive_read_set_seek_callback(builder.handle(), Some(stream_seek_callback::<T>)) {
+                ffi::ARCHIVE_OK => {},
+                _ => { return Err(ArchiveError::from(&builder as &Handle)) },
+            }
+        };
+        Self::open(builder, src)
+    }
+
+    pub fn into_inner(self) -> T {
+        self._pipe.reader
     }
 }
 
@@ -85,6 +104,30 @@ unsafe extern "C" fn stream_read_callback<T: Read>(handle: *mut ffi::Struct_arch
             let desc = CString::new(e.description()).unwrap();
             ffi::archive_set_error(handle, e.raw_os_error().unwrap_or(0), desc.as_ptr());
             -1 as ssize_t
+        }
+    }
+}
+
+unsafe extern "C" fn stream_seek_callback<T: Seek>(handle: *mut ffi::Struct_archive,
+                                                   data: *mut c_void,
+                                                   offset: int64_t, whence: c_int)
+                                                   -> int64_t {
+    let pipe: &mut Pipe<T> = &mut *(data as *mut Pipe<T>);
+
+    let pos = match whence {
+        SEEK_SET => SeekFrom::Start(offset as u64),
+        SEEK_CUR => SeekFrom::Current(offset),
+        SEEK_END => SeekFrom::End(offset),
+        // Panicking in C callback is UB, but meh. Not going to happen.
+        _ => unreachable!("Invalid seek constant {}", whence),
+    };
+
+    match pipe.seek(pos) {
+        Ok(new_pos) => new_pos as int64_t,
+        Err(e) => {
+            let desc = CString::new(e.description()).unwrap();
+            ffi::archive_set_error(handle, e.raw_os_error().unwrap_or(0), desc.as_ptr());
+            ffi::ARCHIVE_FATAL as int64_t
         }
     }
 }

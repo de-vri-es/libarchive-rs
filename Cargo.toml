@@ -9,4 +9,4 @@ keywords = ["libarchive", "archive", "tar", "zip"]
 
 [dependencies]
 libc = ">= 0.2.0"
-libarchive3-sys = "0.1"
+libarchive3-sys = { git = "https://github.com/albel727/libarchive3-sys.git", branch = "update-ffi" }
