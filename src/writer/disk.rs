@@ -161,7 +161,7 @@ impl Disk {
 }
 
 impl Handle for Disk {
-    unsafe fn handle(&self) -> &mut ffi::Struct_archive {
+    unsafe fn handle(&self) -> &mut ffi::archive {
         self.handle.handle()
     }
 }

@@ -8,7 +8,7 @@ use std::str;
 use libarchive3_sys::ffi;
 
 pub trait Entry {
-    unsafe fn entry(&self) -> *mut ffi::Struct_archive_entry;
+    unsafe fn entry(&self) -> *mut ffi::archive_entry;
 
     fn atime(&self) -> Option<timespec> {
         let entry = unsafe { self.entry() };

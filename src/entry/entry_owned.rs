@@ -2,7 +2,7 @@ use super::Entry;
 use libarchive3_sys::ffi;
 
 pub struct OwnedEntry {
-    handle: *mut ffi::Struct_archive_entry,
+    handle: *mut ffi::archive_entry,
 }
 
 impl OwnedEntry {
@@ -10,7 +10,7 @@ impl OwnedEntry {
         unsafe { Self::from_raw(ffi::archive_entry_new()) }
     }
 
-    unsafe fn from_raw(p: *mut ffi::Struct_archive_entry) -> Option<Self> {
+    unsafe fn from_raw(p: *mut ffi::archive_entry) -> Option<Self> {
         p.as_mut().map(|p| OwnedEntry { handle: p })
     }
 }
@@ -30,7 +30,7 @@ impl Default for OwnedEntry {
 }
 
 impl Entry for OwnedEntry {
-    unsafe fn entry(&self) -> *mut ffi::Struct_archive_entry {
+    unsafe fn entry(&self) -> *mut ffi::archive_entry {
         self.handle
     }
 }

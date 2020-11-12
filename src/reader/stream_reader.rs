@@ -94,7 +94,7 @@ impl<T> StreamReader<T> {
 }
 
 impl<T> Handle for StreamReader<T> {
-    unsafe fn handle(&self) -> &mut ffi::Struct_archive {
+    unsafe fn handle(&self) -> &mut ffi::archive {
         self.handle.handle()
     }
 }
@@ -106,7 +106,7 @@ impl<T> Reader for StreamReader<T> {
 }
 
 unsafe extern "C" fn stream_read_callback<T: Read>(
-    handle: *mut ffi::Struct_archive,
+    handle: *mut ffi::archive,
     data: *mut c_void,
     buff: *mut *const c_void,
 ) -> ssize_t {
@@ -123,7 +123,7 @@ unsafe extern "C" fn stream_read_callback<T: Read>(
 }
 
 unsafe extern "C" fn stream_seek_callback<T: Seek>(
-    handle: *mut ffi::Struct_archive,
+    handle: *mut ffi::archive,
     data: *mut c_void,
     offset: i64,
     whence: c_int,

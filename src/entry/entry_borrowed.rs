@@ -3,11 +3,11 @@ use libarchive3_sys::ffi;
 use std::ptr;
 
 pub struct BorrowedEntry {
-    pub(crate) handle: *mut ffi::Struct_archive_entry,
+    pub(crate) handle: *mut ffi::archive_entry,
 }
 
 impl BorrowedEntry {
-    pub fn new(handle: *mut ffi::Struct_archive_entry) -> Self {
+    pub fn new(handle: *mut ffi::archive_entry) -> Self {
         BorrowedEntry { handle: handle }
     }
 }
@@ -21,7 +21,7 @@ impl Default for BorrowedEntry {
 }
 
 impl Entry for BorrowedEntry {
-    unsafe fn entry(&self) -> *mut ffi::Struct_archive_entry {
+    unsafe fn entry(&self) -> *mut ffi::archive_entry {
         self.handle
     }
 }

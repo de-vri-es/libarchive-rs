@@ -1,11 +1,11 @@
 use libarchive3_sys::ffi;
 
 pub struct ArchiveHandle {
-    handle: *mut ffi::Struct_archive,
+    handle: *mut ffi::archive,
 }
 
 impl ArchiveHandle {
-    pub unsafe fn from_raw(handle: *mut ffi::Struct_archive) -> Option<Self> {
+    pub unsafe fn from_raw(handle: *mut ffi::archive) -> Option<Self> {
         handle
             .as_mut()
             .map(|handle| ArchiveHandle { handle: handle })
@@ -30,7 +30,7 @@ impl Drop for ArchiveHandle {
 }
 
 impl crate::archive::Handle for ArchiveHandle {
-    unsafe fn handle(&self) -> &mut ffi::Struct_archive {
+    unsafe fn handle(&self) -> &mut ffi::archive {
         &mut *self.handle
     }
 }

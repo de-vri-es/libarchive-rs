@@ -5,7 +5,7 @@ use crate::error::ErrCode;
 use libarchive3_sys::ffi;
 
 pub trait Handle {
-    unsafe fn handle(&self) -> &mut ffi::Struct_archive;
+    unsafe fn handle(&self) -> &mut ffi::archive;
 
     fn err_code(&self) -> ErrCode {
         let code = unsafe { ffi::archive_errno(self.handle()) };

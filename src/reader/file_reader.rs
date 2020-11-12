@@ -51,7 +51,7 @@ impl FileReader {
 }
 
 impl Handle for FileReader {
-    unsafe fn handle(&self) -> &mut ffi::Struct_archive {
+    unsafe fn handle(&self) -> &mut ffi::archive {
         self.handle.handle()
     }
 }
