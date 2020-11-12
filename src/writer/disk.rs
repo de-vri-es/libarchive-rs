@@ -102,7 +102,7 @@ impl Disk {
                 }
             }
             if write_pending {
-                bytes += r#try!(self.write_data(reader));
+                bytes += self.write_data(reader)?;
                 write_pending = false;
             }
         }
