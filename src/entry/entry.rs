@@ -134,7 +134,9 @@ pub trait Entry {
 
     fn set_birthtime(&mut self, t: Option<timespec>) {
         match t {
-            Some(t) => unsafe { ffi::archive_entry_set_birthtime(self.entry(), t.tv_sec, t.tv_nsec) },
+            Some(t) => unsafe {
+                ffi::archive_entry_set_birthtime(self.entry(), t.tv_sec, t.tv_nsec)
+            },
             None => unsafe { ffi::archive_entry_unset_birthtime(self.entry()) },
         }
     }
@@ -193,7 +195,11 @@ pub trait Entry {
     }
 }
 
-pub fn entry_debug_fmt<E: Entry>(struct_name: &str, e: &E, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+pub fn entry_debug_fmt<E: Entry>(
+    struct_name: &str,
+    e: &E,
+    f: &mut ::std::fmt::Formatter,
+) -> ::std::fmt::Result {
     f.debug_struct(struct_name)
         .field("type", &e.filetype())
         .field("pathname", &String::from_utf8_lossy(e.pathname_raw()))

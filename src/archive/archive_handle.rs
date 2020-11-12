@@ -6,7 +6,9 @@ pub struct ArchiveHandle {
 
 impl ArchiveHandle {
     pub unsafe fn from_raw(handle: *mut ffi::Struct_archive) -> Option<Self> {
-        handle.as_mut().map(|handle| ArchiveHandle { handle: handle } )
+        handle
+            .as_mut()
+            .map(|handle| ArchiveHandle { handle: handle })
     }
 }
 

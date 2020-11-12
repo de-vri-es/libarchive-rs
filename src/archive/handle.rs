@@ -1,8 +1,8 @@
 use std::ffi::CStr;
 use std::str;
 
-use libarchive3_sys::ffi;
 use crate::error::ErrCode;
+use libarchive3_sys::ffi;
 
 pub trait Handle {
     unsafe fn handle(&self) -> &mut ffi::Struct_archive;
@@ -23,4 +23,3 @@ pub trait Handle {
         }
     }
 }
-

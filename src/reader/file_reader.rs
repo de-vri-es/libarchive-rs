@@ -4,10 +4,10 @@ use std::path::Path;
 
 use libarchive3_sys::ffi;
 
+use super::{Builder, Reader};
 use crate::archive::{ArchiveHandle, Handle};
 use crate::entry::BorrowedEntry;
-use crate::error::{ArchiveResult, ArchiveError};
-use super::{Builder, Reader};
+use crate::error::{ArchiveError, ArchiveResult};
 
 const BLOCK_SIZE: usize = 10240;
 
@@ -21,9 +21,7 @@ impl FileReader {
         let c_file = CString::new(file.as_ref().to_string_lossy().as_bytes()).unwrap();
         unsafe {
             match ffi::archive_read_open_filename(builder.handle(), c_file.as_ptr(), BLOCK_SIZE) {
-                ffi::ARCHIVE_OK => {
-                    Ok(Self::new(builder.into()))
-                }
+                ffi::ARCHIVE_OK => Ok(Self::new(builder.into())),
                 _ => Err(ArchiveError::from(&builder as &dyn Handle)),
             }
         }
@@ -38,9 +36,7 @@ impl FileReader {
     pub fn open_fd(builder: Builder, fd: &::std::os::unix::io::RawFd) -> ArchiveResult<Self> {
         unsafe {
             match ffi::archive_read_open_fd(builder.handle(), *fd, BLOCK_SIZE) {
-                ffi::ARCHIVE_OK => {
-                    Ok(Self::new(builder.into()))
-                }
+                ffi::ARCHIVE_OK => Ok(Self::new(builder.into())),
                 _ => Err(ArchiveError::from(&builder as &dyn Handle)),
             }
         }

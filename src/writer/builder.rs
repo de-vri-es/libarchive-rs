@@ -1,11 +1,11 @@
 use std::default::Default;
-use std::path::Path;
 use std::ffi::CString;
+use std::path::Path;
 
 use libarchive3_sys::ffi;
 
 use crate::archive::{ArchiveHandle, Handle, WriteFilter, WriteFormat};
-use crate::error::{ArchiveResult, ArchiveError};
+use crate::error::{ArchiveError, ArchiveResult};
 use crate::writer::writer::Writer;
 
 pub struct Builder {
@@ -23,7 +23,9 @@ impl Builder {
                 ffi::archive_write_add_filter_b64encode(self.handle())
             },
             WriteFilter::Bzip2 => unsafe { ffi::archive_write_add_filter_bzip2(self.handle()) },
-            WriteFilter::Compress => unsafe { ffi::archive_write_add_filter_compress(self.handle()) },
+            WriteFilter::Compress => unsafe {
+                ffi::archive_write_add_filter_compress(self.handle())
+            },
             WriteFilter::Grzip => unsafe { ffi::archive_write_add_filter_grzip(self.handle()) },
             WriteFilter::Gzip => unsafe { ffi::archive_write_add_filter_gzip(self.handle()) },
             WriteFilter::Lrzip => unsafe { ffi::archive_write_add_filter_lrzip(self.handle()) },
@@ -35,7 +37,9 @@ impl Builder {
                 let c_prog = CString::new(prog).unwrap();
                 unsafe { ffi::archive_write_add_filter_program(self.handle(), c_prog.as_ptr()) }
             }
-            WriteFilter::UuEncode => unsafe { ffi::archive_write_add_filter_uuencode(self.handle()) },
+            WriteFilter::UuEncode => unsafe {
+                ffi::archive_write_add_filter_uuencode(self.handle())
+            },
             WriteFilter::Xz => unsafe { ffi::archive_write_add_filter_xz(self.handle()) },
         };
         match result {
@@ -82,9 +86,7 @@ impl Builder {
         let c_file = CString::new(file.as_ref().to_string_lossy().as_bytes()).unwrap();
         let res = unsafe { ffi::archive_write_open_filename(self.handle(), c_file.as_ptr()) };
         match res {
-            ffi::ARCHIVE_OK => {
-                Ok(Writer::new(self.handle))
-            }
+            ffi::ARCHIVE_OK => Ok(Writer::new(self.handle)),
             _ => Err(ArchiveError::from(&self as &dyn Handle)),
         }
     }
@@ -94,7 +96,9 @@ impl Default for Builder {
     fn default() -> Self {
         unsafe {
             let handle = ArchiveHandle::from_raw(ffi::archive_write_new());
-            Builder { handle: handle.expect("Allocation error") }
+            Builder {
+                handle: handle.expect("Allocation error"),
+            }
         }
     }
 }

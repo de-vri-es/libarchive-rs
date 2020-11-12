@@ -5,9 +5,9 @@ use std::ptr;
 use libarchive3_sys::ffi;
 
 use crate::archive::{ArchiveHandle, ExtractOptions, Handle};
+use crate::entry::{BorrowedEntry, Entry};
+use crate::error::{ArchiveError, ArchiveResult};
 use crate::reader::Reader;
-use crate::entry::{Entry, BorrowedEntry};
-use crate::error::{ArchiveResult, ArchiveError};
 
 pub struct Disk {
     handle: ArchiveHandle,
@@ -130,14 +130,17 @@ impl Disk {
 
         unsafe {
             loop {
-                match ffi::archive_read_data_block(reader.handle(),
-                                                   &mut buff,
-                                                   &mut size,
-                                                   &mut offset) {
+                match ffi::archive_read_data_block(
+                    reader.handle(),
+                    &mut buff,
+                    &mut size,
+                    &mut offset,
+                ) {
                     ffi::ARCHIVE_EOF => return Ok(size),
                     ffi::ARCHIVE_OK => {
-                        if ffi::archive_write_data_block(self.handle(), buff, size, offset) !=
-                           ffi::ARCHIVE_OK as isize {
+                        if ffi::archive_write_data_block(self.handle(), buff, size, offset)
+                            != ffi::ARCHIVE_OK as isize
+                        {
                             return Err(ArchiveError::from(self as &dyn Handle));
                         }
                     }
@@ -167,7 +170,9 @@ impl Default for Disk {
     fn default() -> Self {
         unsafe {
             let handle = ArchiveHandle::from_raw(ffi::archive_write_disk_new());
-            Disk { handle: handle.expect("Allocation error") }
+            Disk {
+                handle: handle.expect("Allocation error"),
+            }
         }
     }
 }

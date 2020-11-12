@@ -1,6 +1,6 @@
+use crate::archive;
 use std::error;
 use std::fmt;
-use crate::archive;
 
 pub type ArchiveResult<T> = Result<T, ArchiveError>;
 

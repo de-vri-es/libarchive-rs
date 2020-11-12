@@ -1,17 +1,17 @@
 use std::ptr;
 use std::slice;
 
-use libc::{off_t, size_t};
 use libarchive3_sys::ffi;
+use libc::{off_t, size_t};
 
 use crate::archive::Handle;
-use crate::entry::{Entry, BorrowedEntry, OwnedEntry};
-use crate::error::{ArchiveResult, ArchiveError};
+use crate::entry::{BorrowedEntry, Entry, OwnedEntry};
+use crate::error::{ArchiveError, ArchiveResult};
 
-#[deprecated(note="Use BorrowedEntry directly instead.")]
+#[deprecated(note = "Use BorrowedEntry directly instead.")]
 pub use crate::entry::BorrowedEntry as ReaderEntry;
 
-pub trait Reader : Handle {
+pub trait Reader: Handle {
     fn entry(&mut self) -> &mut BorrowedEntry;
 
     fn header_position(&self) -> i64 {
@@ -37,7 +37,9 @@ pub trait Reader : Handle {
     }
 
     fn read(&mut self, buffer: &mut [u8]) -> ArchiveResult<size_t> {
-        let ret_val = unsafe { ffi::archive_read_data(self.handle(), buffer.as_mut_ptr() as *mut _, buffer.len()) };
+        let ret_val = unsafe {
+            ffi::archive_read_data(self.handle(), buffer.as_mut_ptr() as *mut _, buffer.len())
+        };
         if ret_val >= 0 {
             return Ok(ret_val as size_t);
         }
@@ -46,7 +48,7 @@ pub trait Reader : Handle {
     }
 
     fn read_all(&mut self) -> ArchiveResult<Vec<u8>> {
-        const INCREMENT : usize = 65536;
+        const INCREMENT: usize = 65536;
         let mut buf = Vec::with_capacity(INCREMENT);
         loop {
             let len = buf.len();
@@ -61,7 +63,7 @@ pub trait Reader : Handle {
                 break; //EOF
             }
             unsafe { buf.set_len(len + res) };
-        };
+        }
         Ok(buf)
     }
 
@@ -74,7 +76,7 @@ pub trait Reader : Handle {
                 break; //EOF
             }
             read_total += read_bytes as usize;
-        };
+        }
         Ok(read_total)
     }
 
@@ -100,7 +102,10 @@ pub trait Reader : Handle {
         unsafe {
             match ffi::archive_read_data_block(self.handle(), &mut buff, &mut size, &mut offset) {
                 ffi::ARCHIVE_EOF => Ok(None),
-                ffi::ARCHIVE_OK => Ok(Some((slice::from_raw_parts(buff as *const u8, size), offset))),
+                ffi::ARCHIVE_OK => Ok(Some((
+                    slice::from_raw_parts(buff as *const u8, size),
+                    offset,
+                ))),
                 _ => Err(ArchiveError::Sys(self.err_code(), self.err_msg())),
             }
         }
@@ -115,4 +120,3 @@ pub trait Reader : Handle {
         }
     }
 }
-

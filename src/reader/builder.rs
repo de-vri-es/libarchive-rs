@@ -6,9 +6,9 @@ use std::path::Path;
 
 use libarchive3_sys::ffi;
 
-use crate::archive::{ArchiveHandle, ReadCompression, ReadFilter, ReadFormat, Handle};
-use crate::error::ArchiveResult;
 use super::{FileReader, StreamReader};
+use crate::archive::{ArchiveHandle, Handle, ReadCompression, ReadFilter, ReadFormat};
+use crate::error::ArchiveResult;
 
 pub struct Builder {
     handle: ArchiveHandle,
@@ -51,8 +51,12 @@ impl Builder {
             ReadCompression::Rpm => unsafe {
                 ffi::archive_read_support_compression_rpm(self.handle())
             },
-            ReadCompression::Uu => unsafe { ffi::archive_read_support_compression_uu(self.handle()) },
-            ReadCompression::Xz => unsafe { ffi::archive_read_support_compression_xz(self.handle()) },
+            ReadCompression::Uu => unsafe {
+                ffi::archive_read_support_compression_uu(self.handle())
+            },
+            ReadCompression::Xz => unsafe {
+                ffi::archive_read_support_compression_xz(self.handle())
+            },
         };
         match result {
             ffi::ARCHIVE_OK => Ok(()),
@@ -81,10 +85,12 @@ impl Builder {
             ReadFilter::ProgramSignature(prog, cb, size) => {
                 let c_prog = CString::new(prog).unwrap();
                 unsafe {
-                    ffi::archive_read_support_filter_program_signature(self.handle(),
-                                                                       c_prog.as_ptr(),
-                                                                       mem::transmute(cb),
-                                                                       size)
+                    ffi::archive_read_support_filter_program_signature(
+                        self.handle(),
+                        c_prog.as_ptr(),
+                        mem::transmute(cb),
+                        size,
+                    )
                 }
             }
             ReadFilter::Rpm => unsafe { ffi::archive_read_support_filter_rpm(self.handle()) },
@@ -132,7 +138,10 @@ impl Builder {
         FileReader::open_fd(self, fd)
     }
 
-    pub fn open_seekable_stream<T: 'static + Read + Seek>(self, src: T) -> ArchiveResult<StreamReader<T>> {
+    pub fn open_seekable_stream<T: 'static + Read + Seek>(
+        self,
+        src: T,
+    ) -> ArchiveResult<StreamReader<T>> {
         StreamReader::open_seekable(self, src)
     }
 
@@ -157,7 +166,9 @@ impl Default for Builder {
     fn default() -> Self {
         unsafe {
             let handle = ArchiveHandle::from_raw(ffi::archive_read_new());
-            Builder { handle: handle.expect("Allocation error") }
+            Builder {
+                handle: handle.expect("Allocation error"),
+            }
         }
     }
 }

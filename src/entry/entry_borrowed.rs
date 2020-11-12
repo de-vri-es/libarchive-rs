@@ -1,6 +1,6 @@
-use std::ptr;
-use libarchive3_sys::ffi;
 use super::Entry;
+use libarchive3_sys::ffi;
+use std::ptr;
 
 pub struct BorrowedEntry {
     pub(crate) handle: *mut ffi::Struct_archive_entry,
@@ -14,7 +14,9 @@ impl BorrowedEntry {
 
 impl Default for BorrowedEntry {
     fn default() -> Self {
-        BorrowedEntry { handle: ptr::null_mut() }
+        BorrowedEntry {
+            handle: ptr::null_mut(),
+        }
     }
 }
 

@@ -1,5 +1,5 @@
-use libarchive3_sys::ffi;
 use super::Entry;
+use libarchive3_sys::ffi;
 
 pub struct OwnedEntry {
     handle: *mut ffi::Struct_archive_entry,
@@ -7,17 +7,19 @@ pub struct OwnedEntry {
 
 impl OwnedEntry {
     pub fn new() -> Option<Self> {
-        unsafe { Self::from_raw( ffi::archive_entry_new() ) }
+        unsafe { Self::from_raw(ffi::archive_entry_new()) }
     }
 
     unsafe fn from_raw(p: *mut ffi::Struct_archive_entry) -> Option<Self> {
-        p.as_mut().map(|p| OwnedEntry { handle: p } )
+        p.as_mut().map(|p| OwnedEntry { handle: p })
     }
 }
 
 impl Drop for OwnedEntry {
     fn drop(&mut self) {
-        unsafe { ffi::archive_entry_free(self.handle); }
+        unsafe {
+            ffi::archive_entry_free(self.handle);
+        }
     }
 }
 
@@ -35,9 +37,7 @@ impl Entry for OwnedEntry {
 
 impl Clone for OwnedEntry {
     fn clone(&self) -> Self {
-        unsafe {
-            Self::from_raw(ffi::archive_entry_clone(self.handle)).expect("Allocation error")
-        }
+        unsafe { Self::from_raw(ffi::archive_entry_clone(self.handle)).expect("Allocation error") }
     }
 }
 

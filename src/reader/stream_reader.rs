@@ -1,13 +1,13 @@
 use std::ffi::CString;
 use std::io::{self, Read, Seek, SeekFrom};
 
-use libc::{c_void, ssize_t, c_int, SEEK_SET, SEEK_CUR, SEEK_END};
 use libarchive3_sys::ffi;
+use libc::{c_int, c_void, ssize_t, SEEK_CUR, SEEK_END, SEEK_SET};
 
+use super::{Builder, Reader};
 use crate::archive::{ArchiveHandle, Handle};
 use crate::entry::BorrowedEntry;
-use crate::error::{ArchiveResult, ArchiveError};
-use super::{Builder, Reader};
+use crate::error::{ArchiveError, ArchiveResult};
 
 pub struct StreamReader<T> {
     handle: ArchiveHandle,
@@ -28,25 +28,36 @@ impl<T> Pipe<T> {
         }
     }
 
-    fn read_bytes(&mut self) -> io::Result<usize> where T: Read {
+    fn read_bytes(&mut self) -> io::Result<usize>
+    where
+        T: Read,
+    {
         self.reader.read(&mut self.buffer[..])
     }
 
-    fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> where T: Seek {
+    fn seek(&mut self, pos: SeekFrom) -> io::Result<u64>
+    where
+        T: Seek,
+    {
         self.reader.seek(pos)
     }
 }
 
 impl<T> StreamReader<T> {
-    pub fn open(builder: Builder, src: T) -> ArchiveResult<Self> where T: Read {
+    pub fn open(builder: Builder, src: T) -> ArchiveResult<Self>
+    where
+        T: Read,
+    {
         unsafe {
             let mut pipe = Box::new(Pipe::new(src));
             let pipe_ptr: *mut c_void = &mut *pipe as *mut Pipe<T> as *mut c_void;
-            match ffi::archive_read_open(builder.handle(),
-                                         pipe_ptr,
-                                         None,
-                                         Some(stream_read_callback::<T>),
-                                         None) {
+            match ffi::archive_read_open(
+                builder.handle(),
+                pipe_ptr,
+                None,
+                Some(stream_read_callback::<T>),
+                None,
+            ) {
                 ffi::ARCHIVE_OK => {
                     let reader = StreamReader {
                         handle: builder.into(),
@@ -55,19 +66,23 @@ impl<T> StreamReader<T> {
                     };
                     Ok(reader)
                 }
-                _ => {
-                    Err(ArchiveError::from(&builder as &dyn Handle))
-                }
+                _ => Err(ArchiveError::from(&builder as &dyn Handle)),
             }
         }
     }
 
-    pub fn open_seekable(builder: Builder, src: T) -> ArchiveResult<Self> where T: Read + Seek {
+    pub fn open_seekable(builder: Builder, src: T) -> ArchiveResult<Self>
+    where
+        T: Read + Seek,
+    {
         unsafe {
             // Seek callback setter must be called before archive_read_open()
-            match ffi::archive_read_set_seek_callback(builder.handle(), Some(stream_seek_callback::<T>)) {
-                ffi::ARCHIVE_OK => {},
-                _ => { return Err(ArchiveError::from(&builder as &dyn Handle)) },
+            match ffi::archive_read_set_seek_callback(
+                builder.handle(),
+                Some(stream_seek_callback::<T>),
+            ) {
+                ffi::ARCHIVE_OK => {}
+                _ => return Err(ArchiveError::from(&builder as &dyn Handle)),
             }
         };
         Self::open(builder, src)
@@ -90,10 +105,11 @@ impl<T> Reader for StreamReader<T> {
     }
 }
 
-unsafe extern "C" fn stream_read_callback<T: Read>(handle: *mut ffi::Struct_archive,
-                                                   data: *mut c_void,
-                                                   buff: *mut *const c_void)
-                                                   -> ssize_t {
+unsafe extern "C" fn stream_read_callback<T: Read>(
+    handle: *mut ffi::Struct_archive,
+    data: *mut c_void,
+    buff: *mut *const c_void,
+) -> ssize_t {
     let pipe: &mut Pipe<T> = &mut *(data as *mut Pipe<T>);
     *buff = pipe.buffer.as_mut_ptr() as *mut c_void;
     match pipe.read_bytes() {
@@ -106,10 +122,12 @@ unsafe extern "C" fn stream_read_callback<T: Read>(handle: *mut ffi::Struct_arch
     }
 }
 
-unsafe extern "C" fn stream_seek_callback<T: Seek>(handle: *mut ffi::Struct_archive,
-                                                   data: *mut c_void,
-                                                   offset: i64, whence: c_int)
-                                                   -> i64 {
+unsafe extern "C" fn stream_seek_callback<T: Seek>(
+    handle: *mut ffi::Struct_archive,
+    data: *mut c_void,
+    offset: i64,
+    whence: c_int,
+) -> i64 {
     let pipe: &mut Pipe<T> = &mut *(data as *mut Pipe<T>);
 
     let pos = match whence {

@@ -6,9 +6,9 @@ use std::default::Default;
 use libarchive3_sys::ffi;
 
 pub use self::archive_handle::ArchiveHandle;
-#[deprecated(note="Use entry::Entry directly instead.")]
-pub use crate::entry::Entry;
 pub use self::handle::Handle;
+#[deprecated(note = "Use entry::Entry directly instead.")]
+pub use crate::entry::Entry;
 
 #[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
 pub enum ReadCompression {
