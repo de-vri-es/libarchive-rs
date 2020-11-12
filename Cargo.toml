@@ -1,7 +1,10 @@
 [package]
 name = "libarchive"
 version = "0.5.0"
-authors = ["Jamie Winsor <reset@chef.io>"]
+authors = [
+	"Jamie Winsor <reset@chef.io>",
+	"albel727",
+]
 license = "Apache-2.0"
 repository = "https://github.com/chef/libarchive-rust"
 description = "A safe Rust API for authoring and extracting archives with libarchive"
