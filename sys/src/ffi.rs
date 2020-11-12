@@ -1,4 +1,11 @@
-pub use libc::*;
+pub use libc::{dev_t, time_t, wchar_t, FILE};
+pub use std::os::raw::{c_char, c_int, c_long, c_uint, c_ulong, c_void};
+
+#[cfg(not(windows))]
+pub use libc::mode_t;
+
+#[cfg(windows)]
+pub type mode_t = u16;
 
 pub const ARCHIVE_EOF: c_int = 1;
 pub const ARCHIVE_OK: c_int = 0;
@@ -40,13 +47,10 @@ pub enum Struct_archive_entry { }
 pub enum Struct_archive_acl { }
 pub enum Struct_archive_entry_linkresolver { }
 
-#[cfg(windows)]
-pub type mode_t = u16;
-
 pub type archive_read_callback = unsafe extern "C" fn(arg1: *mut Struct_archive,
                                                       _client_data: *mut c_void,
                                                       _buffer: *mut *const c_void)
-                                                      -> ssize_t;
+                                                      -> isize;
 pub type archive_skip_callback = unsafe extern "C" fn(arg1: *mut Struct_archive,
                                                       _client_data: *mut c_void,
                                                       request: i64)
@@ -59,8 +63,8 @@ pub type archive_seek_callback = unsafe extern "C" fn(arg1: *mut Struct_archive,
 pub type archive_write_callback = unsafe extern "C" fn(arg1: *mut Struct_archive,
                                                        _client_data: *mut c_void,
                                                        _buffer: *const c_void,
-                                                       _length: size_t)
-                                                       -> ssize_t;
+                                                       _length: usize)
+                                                       -> isize;
 pub type archive_open_callback = unsafe extern "C" fn(arg1: *mut Struct_archive,
                                                       _client_data: *mut c_void)
                                                       -> c_int;
@@ -98,7 +102,7 @@ extern "C" {
     pub fn archive_read_support_compression_program_signature(arg1: *mut Struct_archive,
                                                               arg2: *const c_char,
                                                               arg3: *const c_void,
-                                                              arg4: size_t)
+                                                              arg4: usize)
                                                               -> c_int;
     pub fn archive_read_support_compression_rpm(arg1: *mut Struct_archive) -> c_int;
     pub fn archive_read_support_compression_uu(arg1: *mut Struct_archive) -> c_int;
@@ -120,7 +124,7 @@ extern "C" {
     pub fn archive_read_support_filter_program_signature(arg1: *mut Struct_archive,
                                                          arg2: *const c_char,
                                                          arg3: *const c_void,
-                                                         arg4: size_t)
+                                                         arg4: usize)
                                                          -> c_int;
     pub fn archive_read_support_filter_rpm(arg1: *mut Struct_archive) -> c_int;
     pub fn archive_read_support_filter_uu(arg1: *mut Struct_archive) -> c_int;
@@ -152,7 +156,7 @@ extern "C" {
     pub fn archive_read_append_filter_program_signature(arg1: *mut Struct_archive,
                                                         arg2: *const c_char,
                                                         arg3: *const c_void,
-                                                        arg4: size_t)
+                                                        arg4: usize)
                                                         -> c_int;
     pub fn archive_read_set_open_callback(arg1: *mut Struct_archive,
                                           arg2: ::std::option::Option<archive_open_callback>)
@@ -203,32 +207,32 @@ extern "C" {
                               -> c_int;
     pub fn archive_read_open_filename(arg1: *mut Struct_archive,
                                       _filename: *const c_char,
-                                      _block_size: size_t)
+                                      _block_size: usize)
                                       -> c_int;
     pub fn archive_read_open_filenames(arg1: *mut Struct_archive,
                                        _filenames: *mut *const c_char,
-                                       _block_size: size_t)
+                                       _block_size: usize)
                                        -> c_int;
     pub fn archive_read_open_filename_w(arg1: *mut Struct_archive,
                                         _filename: *const wchar_t,
-                                        _block_size: size_t)
+                                        _block_size: usize)
                                         -> c_int;
     pub fn archive_read_open_file(arg1: *mut Struct_archive,
                                   _filename: *const c_char,
-                                  _block_size: size_t)
+                                  _block_size: usize)
                                   -> c_int;
     pub fn archive_read_open_memory(arg1: *mut Struct_archive,
                                     buff: *const c_void,
-                                    size: size_t)
+                                    size: usize)
                                     -> c_int;
     pub fn archive_read_open_memory2(a: *mut Struct_archive,
                                      buff: *const c_void,
-                                     size: size_t,
-                                     read_size: size_t)
+                                     size: usize,
+                                     read_size: usize)
                                      -> c_int;
     pub fn archive_read_open_fd(arg1: *mut Struct_archive,
                                 _fd: c_int,
-                                _block_size: size_t)
+                                _block_size: usize)
                                 -> c_int;
     pub fn archive_read_open_FILE(arg1: *mut Struct_archive, _file: *mut FILE) -> c_int;
     pub fn archive_read_next_header(arg1: *mut Struct_archive,
@@ -242,12 +246,12 @@ extern "C" {
     pub fn archive_read_format_capabilities(arg1: *mut Struct_archive) -> c_int;
     pub fn archive_read_data(arg1: *mut Struct_archive,
                              arg2: *mut c_void,
-                             arg3: size_t)
-                             -> ssize_t;
+                             arg3: usize)
+                             -> isize;
     pub fn archive_seek_data(arg1: *mut Struct_archive, arg2: i64, arg3: c_int) -> i64;
     pub fn archive_read_data_block(a: *mut Struct_archive,
                                    buff: *mut *const c_void,
-                                   size: *mut size_t,
+                                   size: *mut usize,
                                    offset: *mut i64)
                                    -> c_int;
     pub fn archive_read_data_skip(arg1: *mut Struct_archive) -> c_int;
@@ -273,7 +277,7 @@ extern "C" {
                                        -> c_int;
     pub fn archive_read_set_passphrase_callback(arg1: *mut Struct_archive,
                                                 client_data: *mut c_void,
-                                                arg2: ::std::option::Option<archive_passphrase_callback>)
+                                                arg2: Option<archive_passphrase_callback>)
                                                 -> c_int;
     pub fn archive_read_extract(arg1: *mut Struct_archive,
                                 arg2: *mut Struct_archive_entry,
@@ -286,7 +290,7 @@ extern "C" {
     pub fn archive_read_extract_set_progress_callback(arg1:
                                                           *mut Struct_archive,
                                                       _progress_func:
-                                                          ::std::option::Option<unsafe extern "C" fn(arg1:
+                                                          Option<unsafe extern "C" fn(arg1:
                                                                                                          *mut c_void)
                                                                                     ->
                                                                                         ()>,
@@ -377,9 +381,9 @@ extern "C" {
     pub fn archive_write_zip_set_compression_store(arg1: *mut Struct_archive) -> c_int;
     pub fn archive_write_open(arg1: *mut Struct_archive,
                               arg2: *mut c_void,
-                              arg3: ::std::option::Option<archive_open_callback>,
-                              arg4: ::std::option::Option<archive_write_callback>,
-                              arg5: ::std::option::Option<archive_close_callback>)
+                              arg3: Option<archive_open_callback>,
+                              arg4: Option<archive_write_callback>,
+                              arg5: Option<archive_close_callback>)
                               -> c_int;
     pub fn archive_write_open_fd(arg1: *mut Struct_archive, _fd: c_int) -> c_int;
     pub fn archive_write_open_filename(arg1: *mut Struct_archive, _file: *const c_char) -> c_int;
@@ -390,21 +394,21 @@ extern "C" {
     pub fn archive_write_open_FILE(arg1: *mut Struct_archive, arg2: *mut FILE) -> c_int;
     pub fn archive_write_open_memory(arg1: *mut Struct_archive,
                                      _buffer: *mut c_void,
-                                     _buffSize: size_t,
-                                     _used: *mut size_t)
+                                     _buffSize: usize,
+                                     _used: *mut usize)
                                      -> c_int;
     pub fn archive_write_header(arg1: *mut Struct_archive,
                                 arg2: *mut Struct_archive_entry)
                                 -> c_int;
     pub fn archive_write_data(arg1: *mut Struct_archive,
                               arg2: *const c_void,
-                              arg3: size_t)
-                              -> ssize_t;
+                              arg3: usize)
+                              -> isize;
     pub fn archive_write_data_block(arg1: *mut Struct_archive,
                                     arg2: *const c_void,
-                                    arg3: size_t,
+                                    arg3: usize,
                                     arg4: i64)
-                                    -> ssize_t;
+                                    -> isize;
     pub fn archive_write_finish_entry(arg1: *mut Struct_archive) -> c_int;
     pub fn archive_write_close(arg1: *mut Struct_archive) -> c_int;
     pub fn archive_write_fail(arg1: *mut Struct_archive) -> c_int;
@@ -429,7 +433,7 @@ extern "C" {
     pub fn archive_write_set_passphrase(_a: *mut Struct_archive, p: *const c_char) -> c_int;
     pub fn archive_write_set_passphrase_callback(arg1: *mut Struct_archive,
                                                  client_data: *mut c_void,
-                                                 arg2: ::std::option::Option<archive_passphrase_callback>)
+                                                 arg2: Option<archive_passphrase_callback>)
                                                  -> c_int;
     pub fn archive_write_disk_new() -> *mut Struct_archive;
     pub fn archive_write_disk_set_skip_file(arg1: *mut Struct_archive,
@@ -826,11 +830,11 @@ extern "C" {
     //                                arg2: *const Struct_stat)
     //                                -> ();
     pub fn archive_entry_mac_metadata(arg1: *mut Struct_archive_entry,
-                                      arg2: *mut size_t)
+                                      arg2: *mut usize)
                                       -> *const c_void;
     pub fn archive_entry_copy_mac_metadata(arg1: *mut Struct_archive_entry,
                                            arg2: *const c_void,
-                                           arg3: size_t)
+                                           arg3: usize)
                                            -> ();
     pub fn archive_entry_acl_clear(arg1: *mut Struct_archive_entry) -> ();
     pub fn archive_entry_acl_add_entry(arg1: *mut Struct_archive_entry,
@@ -874,14 +878,14 @@ extern "C" {
     pub fn archive_entry_xattr_add_entry(arg1: *mut Struct_archive_entry,
                                          arg2: *const c_char,
                                          arg3: *const c_void,
-                                         arg4: size_t)
+                                         arg4: usize)
                                          -> ();
     pub fn archive_entry_xattr_count(arg1: *mut Struct_archive_entry) -> c_int;
     pub fn archive_entry_xattr_reset(arg1: *mut Struct_archive_entry) -> c_int;
     pub fn archive_entry_xattr_next(arg1: *mut Struct_archive_entry,
                                     arg2: *mut *const c_char,
                                     arg3: *mut *const c_void,
-                                    arg4: *mut size_t)
+                                    arg4: *mut usize)
                                     -> c_int;
     pub fn archive_entry_sparse_clear(arg1: *mut Struct_archive_entry) -> ();
     pub fn archive_entry_sparse_add_entry(arg1: *mut Struct_archive_entry,
