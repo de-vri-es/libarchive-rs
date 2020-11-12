@@ -22,18 +22,3 @@ $ sudo apt-get install libarchive13
 ```shell
 $ brew install libarchive
 ```
-
-## Usage
-
-Put this in your `Cargo.toml`:
-
-```toml
-[dependencies]
-libarchive = "*"
-```
-
-And this in your crate root:
-
-```rust
-extern crate libarchive;
-```

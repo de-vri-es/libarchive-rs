@@ -6,9 +6,9 @@ use std::io::{self, Read, Seek, SeekFrom};
 use libc::{c_void, ssize_t, c_int, int64_t, SEEK_SET, SEEK_CUR, SEEK_END};
 use libarchive3_sys::ffi;
 
-use archive::{ArchiveHandle, Handle};
-use entry::BorrowedEntry;
-use error::{ArchiveResult, ArchiveError};
+use crate::archive::{ArchiveHandle, Handle};
+use crate::entry::BorrowedEntry;
+use crate::error::{ArchiveResult, ArchiveError};
 use super::{Builder, Reader};
 
 pub struct StreamReader<T> {
@@ -34,7 +34,7 @@ impl<T> Pipe<T> {
         self.reader.read(&mut self.buffer[..])
     }
 
-    fn seek(&mut self, pos: SeekFrom) -> io::Result<(u64)> where T: Seek {
+    fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> where T: Seek {
         self.reader.seek(pos)
     }
 }
@@ -58,7 +58,7 @@ impl<T> StreamReader<T> {
                     Ok(reader)
                 }
                 _ => {
-                    Err(ArchiveError::from(&builder as &Handle))
+                    Err(ArchiveError::from(&builder as &dyn Handle))
                 }
             }
         }
@@ -69,7 +69,7 @@ impl<T> StreamReader<T> {
             // Seek callback setter must be called before archive_read_open()
             match ffi::archive_read_set_seek_callback(builder.handle(), Some(stream_seek_callback::<T>)) {
                 ffi::ARCHIVE_OK => {},
-                _ => { return Err(ArchiveError::from(&builder as &Handle)) },
+                _ => { return Err(ArchiveError::from(&builder as &dyn Handle)) },
             }
         };
         Self::open(builder, src)

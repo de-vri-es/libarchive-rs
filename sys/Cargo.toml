@@ -8,6 +8,8 @@ description = "Raw bindings for libarchive"
 keywords = ["libarchive", "archive", "tar", "zip"]
 build = "build.rs"
 
+edition = "2018"
+
 [dependencies]
 libc = ">= 0.2.0"
 

@@ -1,5 +1,3 @@
-extern crate libarchive;
-
 pub mod util;
 
 use std::fs::File;
