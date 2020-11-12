@@ -1,0 +1,15 @@
+[package]
+name = "libarchive3-sys"
+version = "0.1.2"
+authors = ["Jamie Winsor <reset@chef.io>"]
+license = "Apache-2.0"
+repository = "https://github.com/chef/libarchive3-sys"
+description = "Raw bindings for libarchive"
+keywords = ["libarchive", "archive", "tar", "zip"]
+build = "build.rs"
+
+[dependencies]
+libc = ">= 0.2.0"
+
+[build-dependencies]
+pkg-config = "0.3"
